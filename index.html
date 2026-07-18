@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="OmniCommand Tab — your premium daily productivity dashboard for freelancers and developers. Track expenses, generate invoices, tailor resumes, and more.">
+  <title>OmniCommand Tab</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- QR Code Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Ambient Glow -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+
+  <div class="app-wrap">
+
+    <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon"><i data-lucide="terminal-square"></i></div>
+        <div>
+          <div class="brand-name">OmniCommand<span> Tab</span></div>
+          <div class="brand-sub">Your daily productivity terminal</div>
+        </div>
+      </div>
+
+      <button id="cmd-trigger" class="cmd-bar-btn">
+        <i data-lucide="search"></i>
+        <span>Type a command or action...</span>
+        <kbd>⌘K</kbd>
+      </button>
+
+      <div class="header-right">
+        <div id="ai-status-badge" class="ai-badge ai-badge-off" title="Gemini AI Status">
+          <i data-lucide="bot"></i>
+          <span id="ai-badge-text">AI Off</span>
+        </div>
+        <div class="via-badge">
+          <span class="pulse"></span>
+          viaSocket
+        </div>
+        <div id="live-clock" class="live-clock">--:-- --</div>
+        <button id="settings-btn" class="settings-btn" title="Settings — Add Gemini API Key">
+          <i data-lucide="settings"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ═══════════════════════ MAIN GRID ═══════════════════════ -->
+    <main class="grid-main">
+
+      <!-- ── Widget 1: Expense Tracker ── -->
+      <section class="widget w-expense" id="widget-expense">
+        <header class="wh">
+          <span class="wh-title"><i data-lucide="wallet" class="ico c1"></i>Expense Tracker</span>
+          <span class="badge b1">NL Powered</span>
+        </header>
+
+        <div class="wb">
+          <div class="nl-row">
+            <div class="nl-input-wrap">
+              <input type="text" id="exp-input" placeholder="chai 20 · grocery 850 Big Bazaar · uber 240 commute" autocomplete="off">
+              <button class="btn-icon b1" id="exp-add-btn"><i data-lucide="plus-circle"></i></button>
+            </div>
+            <p class="hint">Format: <code>item amount [vendor/tag]</code></p>
+          </div>
+
+          <div class="expense-summary-row">
+            <div class="donut-wrap">
+              <canvas id="donut-canvas" width="120" height="120"></canvas>
+              <div class="donut-center">
+                <div class="donut-total" id="donut-total">₹0</div>
+                <div class="donut-lbl">This Month</div>
+              </div>
+            </div>
+            <div class="legend-wrap" id="exp-legend"></div>
+          </div>
+
+          <h4 class="section-title">Recent Entries</h4>
+          <div class="table-scroll">
+            <table class="data-table" id="exp-table">
+              <thead><tr><th>Description</th><th>Category</th><th>Amount</th><th>Synced</th></tr></thead>
+              <tbody id="exp-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="terminal-box">
+            <div class="tb-head">
+              <span>viaSocket · Sheets Sync Log</span>
+              <div class="tb-dots"><span class="d r"></span><span class="d y"></span><span class="d g"></span></div>
+            </div>
+            <div class="tb-body" id="exp-log">
+              <span class="log dim">[system] Idle — awaiting input...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Widget 2: Invoice Generator ── -->
+      <section class="widget w-invoice" id="widget-invoice">
+        <header class="wh">
+          <span class="wh-title"><i data-lucide="receipt" class="ico c2"></i>Invoice &amp; UPI</span>
+          <span class="badge b2">Auto-GST</span>
+        </header>
+
+        <div class="wb">
+          <div class="nl-row">
+            <div class="nl-input-wrap">
+              <input type="text" id="inv-nl-input" placeholder="Google 5000 USD consulting · Stripe 3200 integration" autocomplete="off">
+              <button class="btn-pill b2" id="inv-nl-btn"><i data-lucide="zap"></i> Parse</button>
+            </div>
+          </div>
+
+          <div class="inv-layout">
+            <div class="inv-form">
+              <div class="form-row">
+                <div class="fg"><label>Client</label><input type="text" id="inv-client" value="Acme Corp"></div>
+                <div class="fg"><label>Amount</label><input type="number" id="inv-amount" value="12000"></div>
+              </div>
+              <div class="form-row">
+                <div class="fg">
+                  <label>GST Rate</label>
+                  <select id="inv-gst">
+                    <option value="0">0% (Exempt)</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18" selected>18%</option>
+                    <option value="28">28%</option>
+                  </select>
+                </div>
+                <div class="fg">
+                  <label>Currency</label>
+                  <select id="inv-currency">
+                    <option value="INR" selected>₹ INR</option>
+                    <option value="USD">$ USD</option>
+                    <option value="EUR">€ EUR</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fg"><label>Your UPI ID</label><input type="text" id="inv-upi" value="freelancer@upi" placeholder="yourname@okaxis"></div>
+
+              <div class="calc-box">
+                <div class="calc-row"><span>Base Amount</span><strong id="c-base">₹12,000</strong></div>
+                <div class="calc-row"><span>GST (18%)</span><strong id="c-gst">₹2,160</strong></div>
+                <div class="calc-row total-row"><span>Total Payable</span><strong id="c-total">₹14,160</strong></div>
+              </div>
+
+              <button class="btn-full b2" id="gen-invoice-btn"><i data-lucide="file-text"></i> Generate Invoice</button>
+            </div>
+
+            <div class="qr-panel">
+              <div class="qr-card">
+                <canvas id="upi-qr" width="140" height="140"></canvas>
+                <div class="qr-footer">
+                  <div class="upi-label">UPI · Scan to Pay</div>
+                  <button class="btn-ghost" id="copy-upi-btn"><i data-lucide="copy"></i> Copy UPI Link</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Widget 3: Resume Tailor (Full Width) ── -->
+      <section class="widget w-full w-resume" id="widget-resume">
+        <header class="wh">
+          <span class="wh-title"><i data-lucide="file-user" class="ico c3"></i>Smart Resume Tailor</span>
+          <span class="badge b3">AI Optimizer</span>
+        </header>
+
+        <div class="wb">
+          <div class="resume-grid">
+            <div class="resume-inputs">
+              <div class="fg">
+                <label>Master Resume / Experience</label>
+                <textarea id="resume-master" rows="7" placeholder="Paste your experience, skills, and background...">Anant Sharma — Full Stack Developer
+• Built React, Next.js & Node.js web apps with 99.9% uptime for 50k+ users.
+• Managed PostgreSQL & MongoDB databases with optimized indexing.
+• Integrated Stripe, Razorpay, PayPal for real-time payment processing.
+• Connected viaSocket webhooks to automate 15+ business workflows.
+• Reduced API latency by 40% through caching and query optimization.
+• Led team of 4 engineers, shipped 3 products to production in 2024.</textarea>
+              </div>
+              <div class="fg">
+                <label>Target Job Description</label>
+                <textarea id="resume-jd" rows="5" placeholder="Paste the job description here...">We need a Senior Full Stack Engineer with strong Next.js expertise, Stripe integration experience, PostgreSQL and database performance tuning, real-time webhook architecture, and API optimization skills. Experience with viaSocket automation is a strong plus. Must have leadership experience.</textarea>
+              </div>
+              <button class="btn-full b3" id="tailor-btn"><i data-lucide="sparkles"></i> Tailor &amp; Emphasize Keywords</button>
+            </div>
+
+            <div class="resume-output">
+              <div class="score-bar-row">
+                <span>Keyword Match Score</span>
+                <strong id="match-score">—</strong>
+              </div>
+              <div class="score-track"><div class="score-fill" id="score-fill" style="width:0%"></div></div>
+
+              <h4 class="section-title" style="margin-top:12px">Identified Keywords</h4>
+              <div class="kw-tags" id="kw-tags"></div>
+
+              <div class="tailored-box">
+                <div class="box-head">
+                  Tailored Resume Output
+                  <button class="btn-ghost" id="copy-resume-btn"><i data-lucide="copy"></i> Copy</button>
+                </div>
+                <div class="tailored-preview" id="tailored-preview">
+                  <p class="dim">Click "Tailor &amp; Emphasize Keywords" to generate your optimized resume.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Widget 4: Bookmark Brain ── -->
+      <section class="widget w-bookmarks" id="widget-bookmarks">
+        <header class="wh">
+          <span class="wh-title"><i data-lucide="brain" class="ico c4"></i>Bookmark Brain</span>
+          <span class="badge b4">Semantic</span>
+        </header>
+
+        <div class="wb">
+          <div class="nl-input-wrap bm-search-row">
+            <i data-lucide="search" class="search-icon-in"></i>
+            <input type="text" id="bm-search" placeholder="Search by meaning... 'state management patterns'" autocomplete="off">
+          </div>
+
+          <details class="add-bm-drop">
+            <summary><i data-lucide="plus"></i> Add Bookmark</summary>
+            <div class="add-bm-body">
+              <div class="form-row">
+                <div class="fg"><label>URL</label><input type="url" id="bm-url" value="https://react.dev" placeholder="https://..."></div>
+                <div class="fg"><label>Title</label><input type="text" id="bm-title" value="React Documentation" placeholder="Bookmark Title"></div>
+              </div>
+              <button class="btn-full b4" id="bm-add-btn"><i data-lucide="bookmark-plus"></i> Save &amp; Auto-Tag</button>
+            </div>
+          </details>
+
+          <h4 class="section-title">Saved Links</h4>
+          <div class="bm-list" id="bm-list"></div>
+        </div>
+      </section>
+
+      <!-- ── Widget 5: Meeting Notes Extractor ── -->
+      <section class="widget w-notes" id="widget-notes">
+        <header class="wh">
+          <span class="wh-title"><i data-lucide="clipboard-list" class="ico c5"></i>Meeting Notes Extractor</span>
+          <span class="badge b5">Action Puller</span>
+        </header>
+
+        <div class="wb">
+          <div class="fg">
+            <label>Paste raw meeting notes or transcript:</label>
+            <textarea id="notes-input" rows="6" placeholder="Paste messy notes here... Decisions, tasks, owner names...">Anant: I'll finish the QR code renderer and the natural language parser by today EOD.
+Priya: I'll review the full API schema by Tuesday morning.
+We decided to deploy the MVP to Vercel this Wednesday.
+Anant needs to make sure the viaSocket webhook is synced to Google Sheets before launch.
+Priya to design the onboarding screens by Friday.
+Final decision: We go live on Monday, no delays.</textarea>
+          </div>
+          <button class="btn-full b5" id="extract-btn"><i data-lucide="cpu"></i> Extract Actions &amp; Decisions</button>
+
+          <div id="notes-output" class="notes-output" style="display:none;">
+            <h4 class="section-title">🏛️ Decisions</h4>
+            <ul class="decisions-list" id="notes-decisions"></ul>
+
+            <h4 class="section-title" style="margin-top:12px">✅ Action Items</h4>
+            <div class="action-list" id="notes-actions"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      Built for makers who ship daily · Press <kbd>⌘K</kbd> to open Command Palette
+    </footer>
+  </div>
+
+  <!-- ═══════════════════════ COMMAND PALETTE ═══════════════════════ -->
+  <div class="cp-overlay" id="cp-overlay" style="display:none;">
+    <div class="cp-box">
+      <div class="cp-input-row">
+        <i data-lucide="terminal"></i>
+        <input type="text" id="cp-input" placeholder="/expense chai 20 · /invoice Stripe 3000 · /bookmark url · /tailor · /notes" autocomplete="off">
+        <span class="esc-tag">ESC</span>
+      </div>
+      <div class="cp-body" id="cp-body">
+        <div class="cp-section-title">Quick Commands</div>
+        <div class="cp-list" id="cp-list">
+          <div class="cp-item active" data-cmd="/expense "><i data-lucide="wallet" class="ico c1"></i><div><div class="cp-cmd">/expense &lt;item&gt; &lt;amount&gt; [vendor]</div><div class="cp-sub">Log an expense instantly</div></div></div>
+          <div class="cp-item" data-cmd="/invoice "><i data-lucide="receipt" class="ico c2"></i><div><div class="cp-cmd">/invoice &lt;client&gt; &lt;amount&gt; [currency]</div><div class="cp-sub">Create and generate invoice</div></div></div>
+          <div class="cp-item" data-cmd="/bookmark "><i data-lucide="brain" class="ico c4"></i><div><div class="cp-cmd">/bookmark &lt;url&gt;</div><div class="cp-sub">Save and auto-summarize a link</div></div></div>
+          <div class="cp-item" data-cmd="/tailor"><i data-lucide="file-user" class="ico c3"></i><div><div class="cp-cmd">/tailor</div><div class="cp-sub">Jump to Resume Tailor widget</div></div></div>
+          <div class="cp-item" data-cmd="/notes"><i data-lucide="clipboard-list" class="ico c5"></i><div><div class="cp-cmd">/notes</div><div class="cp-sub">Jump to Meeting Notes widget</div></div></div>
+        </div>
+        <div class="cp-footer">↑↓ Navigate · Enter to execute · ESC to close</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ═══════════════════════ SETTINGS MODAL ═══════════════════════ -->
+  <div class="settings-overlay" id="settings-overlay" style="display:none;">
+    <div class="settings-box">
+      <div class="settings-header">
+        <div class="settings-title">
+          <i data-lucide="key-round"></i>
+          AI Settings — Gemini API
+        </div>
+        <button class="settings-close" id="settings-close"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="settings-body">
+        <div class="settings-info-box">
+          <i data-lucide="info"></i>
+          <div>
+            <strong>Your key stays on your device.</strong> It is stored only in <code>localStorage</code> — never sent anywhere except directly to the Gemini API.
+          </div>
+        </div>
+
+        <div class="fg">
+          <label>Google Gemini API Key</label>
+          <div class="key-input-row">
+            <input type="password" id="gemini-key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
+            <button class="btn-ghost" id="toggle-key-vis" title="Show/hide key"><i data-lucide="eye"></i></button>
+          </div>
+          <p class="hint">Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a> → Create API key</p>
+        </div>
+
+        <div class="settings-features">
+          <div class="feature-row">
+            <i data-lucide="wallet" class="ico c1"></i>
+            <span>Expense Tracker — AI categorization</span>
+          </div>
+          <div class="feature-row">
+            <i data-lucide="file-user" class="ico c3"></i>
+            <span>Resume Tailor — AI keyword analysis &amp; rewrite</span>
+          </div>
+          <div class="feature-row">
+            <i data-lucide="receipt" class="ico c2"></i>
+            <span>Invoice — AI natural language parsing</span>
+          </div>
+          <div class="feature-row">
+            <i data-lucide="brain" class="ico c4"></i>
+            <span>Bookmark Brain — AI summary &amp; tagging</span>
+          </div>
+          <div class="feature-row">
+            <i data-lucide="clipboard-list" class="ico c5"></i>
+            <span>Meeting Notes — AI action item extraction</span>
+          </div>
+        </div>
+
+        <div id="ai-test-result" class="ai-test-result" style="display:none;"></div>
+
+        <div class="settings-actions">
+          <button class="btn-ghost" id="test-key-btn"><i data-lucide="zap"></i> Test Connection</button>
+          <button class="btn-full b1" id="save-key-btn"><i data-lucide="save"></i> Save API Key</button>
+        </div>
+
+        <div class="danger-zone">
+          <button class="btn-ghost danger" id="clear-key-btn"><i data-lucide="trash-2"></i> Remove Saved Key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
